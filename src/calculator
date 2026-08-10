@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+    <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pixel Calculator</title>
+    <style>
+
+    :root{
+    --bg:#44042f;
+    --panel:#1a1a22;
+    --key:#2a2a3a;
+    --keyActive:#3a3a60;
+    --text:#e8e8f0;
+    --accent:#64d2ff;
+  }
+  *{box-sizing:border-box}
+
+  body{
+    margin:0;
+    background:radial-gradient
+    (circle at 30% -10%, #030330 0%, #0f0f14 60%), #0f0f14;
+    color:var(--text);
+    font-family:ui-monospace,SFMono-Regular,monospace}
+
+  .calc{
+    width:360px;
+    margin:60px auto;
+    padding:16px;
+    border-radius:14px;
+    background:linear-gradient(#010155,#000035);
+    box-shadow:0 20px 40px rgba(92, 94, 179, 0.5)
+  }
+
+  .display{
+    height:82px;
+    margin:
+    8px 0 12px;
+    background:#00122c; 
+    border-radius:9px; 
+    display:flex; 
+    align-items:flex-end; 
+    justify-content:flex-end; 
+    padding:12px; 
+    font-size:32px; 
+    letter-spacing:.5px; 
+    word-break:break-all; 
+    border:4px solid #303030
+  }
+
+  .pixel{
+    background:#0b0b0f;
+    border:2px solid #303030;
+    border-radius:6px; 
+    padding:6px; 
+    display:grid; 
+    grid-template-columns: 
+    repeat(4, 1fr); grid-gap:8px
+  }
+
+  .button{
+    width:70px;height:52px;
+    border-radius:6px;border:0;
+    background: #101d63; 
+    color:#fff; 
+    font-size:18px; 
+    cursor:pointer; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center; 
+    user-select:none; 
+    transition: transform .05s ease
+  }
+
+  .button:active{ 
+    background: #000053; 
+    transform: scale(0.99) 
+    translateY(1px)
+  }
+
+  .button.zero{ 
+    grid-column: 
+    span 2; 
+    width:148px 
+  }
+
+  .row{ 
+    display:flex; 
+    gap:8px
+  }
+
+  .indicator{ 
+    font-size:12px; 
+    opacity:.7; 
+    margin-left:auto; 
+    padding:4px 8px
+  }
+
+  .ops{ 
+    background:#02026b 
+  }
+
+  .accent{ 
+    color:var(--accent) 
+  }
+
+</style>
+</head>
+<body>
+  <div class="calc" aria-label="Pixel calculator">
+    <div id="display" class="display" aria-label="Display">0</div>
+    <div class="pixel" id="keys" role="group" aria-label="Calculator keys">
+
+      <!-- rows of buttons -->
+      <button class="button" data-value="AC" aria-label="Clear">AC</button>
+      <button class="button" data-value="+/-" aria-label="Toggle sign">+/-</button>
+      <button class="button" data-value="%" aria-label="Percentage">%</button>
+      <button class="button ops" data-value="÷" aria-label="Divide">÷</button>
+
+      <button class="button" data-value="7" aria-label="7">7</button>
+      <button class="button" data-value="8" aria-label="8">8</button>
+      <button class="button" data-value="9" aria-label="9">9</button>
+      <button class="button ops" data-value="×" aria-label="Multiply">×</button>
+
+      <button class="button" data-value="4" aria-label="4">4</button>
+      <button class="button" data-value="5" aria-label="5">5</button>
+      <button class="button" data-value="6" aria-label="6">6</button>
+      <button class="button ops" data-value="-" aria-label="Subtract">−</button>
+
+      <button class="button" data-value="1" aria-label="1">1</button>
+      <button class="button" data-value="2" aria-label="2">2</button>
+      <button class="button" data-value="3" aria-label="3">3</button>
+      <button class="button ops" data-value="+" aria-label="Add">+</button>
+
+      <button class="button zero" data-value="0" aria-label="0">0</button>
+      <button class="button" data-value="." aria-label="Decimal">.</button>
+      <button class="button" data-value="=" aria-label="Equals" style="grid-column: span 1; background:#3a5; color:#000">=</button>
+    </div>
+    <div class="indicator" id="hint" aria-live="polite" style="opacity:.6">Click digits or operators</div>
+  </div>
+
+  <script>
+    // Pixel calculator logic
+    const display = document.getElementById('display');
+    const keys = document.getElementById('keys');
+    let current = '';
+    let previous = null;
+    let operator = null;
+    let resetNext = false;
+
+    function updateDisplay(val){
+      display.textContent = val;
+    }
+
+    function performOp(a, b, op){
+      const A = parseFloat(a);
+      const B = parseFloat(b);
+      if (Number.isNaN(A) || Number.isNaN(B)) return '';
+      switch(op){
+        case '+': return (A + B).toString();
+        case '-': return (A - B).toString();
+        case '×': return (A * B).toString();
+        case '÷': return B === 0 ? 'Error' : (A / B).toString();
+        default: return '';
+      }
+    }
+
+    keys.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const val = btn.dataset.value;
+
+      if (!val) return;
+
+      if (/\d/.test(val) || val === '.') {
+        if (resetNext) { current = ''; resetNext = false; }
+        current += val;
+        updateDisplay(current);
+        return;
+      }
+
+      if (val === 'AC') {
+        current = ''; previous = null; operator = null; updateDisplay('0');
+        return;
+      }
+
+      if (val === '+/-') {
+        if (current) current = (parseFloat(current) * -1).toString();
+        else if (previous != null && operator) {
+          previous = (-parseFloat(previous)).toString();
+        }
+        updateDisplay(current || previous || '0');
+        return;
+      }
+
+      if (val === '%') {
+        if (current) current = (parseFloat(current) / 100).toString();
+        updateDisplay(current);
+        return;
+      }
+
+      // operator
+      if (['+', '−', '-', '×', '÷'].includes(val) || val === '÷' || val === '×') {
+        
+        // normalize minus sign and operators
+        const op = val;
+        if (current !== '') {
+          if (previous == null) {
+            previous = current;
+          } else if (operator) {
+            previous = performOp(previous, current, operator);
+          }
+          current = '';
+        }
+        operator = op;
+        resetNext = false;
+        updateDisplay(previous || '0');
+        return;
+      }
+
+      if (val === '=') {
+        if (operator && (current !== '' || previous !== null)) {
+          const a = previous != null ? previous : '0';
+          const b = current !== '' ? current : a;
+          const result = performOp(a, b, operator);
+          updateDisplay(result);
+          current = result;
+          previous = null;
+          operator = null;
+          resetNext = true;
+        }
+        return;
+      }
+    });
+  </script>
+</body>
+</html>
