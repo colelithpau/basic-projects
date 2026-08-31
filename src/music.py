@@ -11,12 +11,12 @@ Requirements:
     sudo apt install python3-tk -y
     pip install pygame --break-system-packages   (for audio playback)
 Usage:
-    1. Put your song file in the same folder (e.g. "song.mp3")
+    1. Put your lyrics file in the same folder (e.g. "lyrics.mp3")
        and set AUDIO_FILE below. Leave it as "" to run without audio.
     2. Edit the LYRICS list: (start_time_seconds, "text")
        (no spawn-position needed anymore — it's randomized safely)
     3. Run: python3 lyric_float.py
-    4. Start your screen recorder, then click "Start"
+    4. Start your screen recording, then click "Start"
 """
 
 import tkinter as tk
